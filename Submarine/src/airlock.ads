@@ -4,8 +4,7 @@ package airlock is
    type OpenClosed is (Open, Closed);
    type LockedUnlocked is (Locked, Unlocked);
    
-   type AirLock is 
-      record
+   type AirLock is tagged record
          door : OpenClosed;
          lock : LockedUnlocked;
       end record;
@@ -14,12 +13,14 @@ package airlock is
    type SubmarineAirLocks is array (AirLock_Idx) of AirLock;
    
    --     Procedures   
-   procedure CloseAirLocks (s : in out SubmarineAirLocks) with     
-     Pre => (for some I in s'Range => s(I).door = Open),
-     Post => (for all I in s'Range => s(I).door = Closed);
+   procedure CloseAirLocks (this : in out SubmarineAirLocks) with     
+     Pre => (for some I in this'Range => this(I).door = Open),
+     Post => (for all I in this'Range => this(I).door = Closed);
       
-   procedure LockAirLocks (s : in out SubmarineAirLocks) with     
-     Pre => (for some I in s'Range => s(I).lock = Unlocked),
-     Post => (for all I in s'Range => s(I).lock = Locked);
+   procedure LockAirLocks (this : in out SubmarineAirLocks) with     
+     Pre => (for some I in this'Range => this(I).lock = Unlocked),
+     Post => (for all I in this'Range => this(I).lock = Locked);
+   
+   function ConstructAirlocks return SubmarineAirLocks;
 
 end airlock;

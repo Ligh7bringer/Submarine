@@ -1,19 +1,20 @@
 package oxygen is
    
    type O2Level is range 0..100;
-   O2THRESHOLD : constant O2Level := 20;
+   type O2Status is (Low, Medium, High);
+   O2THRESHOLD : constant O2Level := 10;
 
-   type SubmarineOxygenTank is 
-      record
-         oxygen_level : O2Level := 100;
-      end record;
+   type SubmarineOxygenTank is tagged record
+      oxygen_level : O2Level;
+      oxygen_status : O2Status;
+   end record;
 
-   procedure DecrementOxygen (ot : in out SubmarineOxygenTank ) with
-     Pre => ot.oxygen_level /= 0,
-     Post => ot.oxygen_level - ot.oxygen_level'Old = 1;
+   procedure UpdateO2Level (this : in out SubmarineOxygenTank; lvl : in O2Level);
    
-   procedure RegainOxygen (ot : in out SubmarineOxygenTank) with
-     Pre => ot.oxygen_level = 0, 
-     Post => ot.oxygen_level = 100;
+   procedure UpdateO2Status (this : in out SubmarineOxygenTank);
+   
+   function GetOxygenStatus (this : in out SubmarineOxygenTank) return O2Status;
+   
+   function ConstructO2Tank return SubmarineOxygenTank;
    
 end oxygen;

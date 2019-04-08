@@ -1,21 +1,31 @@
 package body airlock is
 
-   procedure CloseAirLocks (s : in out SubmarineAirLocks) is
-      f : AirLock_Idx := s'First;
-      l : AirLock_Idx := s'Last;
+   procedure CloseAirLocks (this : in out SubmarineAirLocks) is
+      f : AirLock_Idx := this'First;
+      l : AirLock_Idx := this'Last;
    begin
       for idx in f..l loop
-         s(idx).door := Closed;
+         this(idx).door := Closed;
       end loop;
    end CloseAirLocks;
    
-   procedure LockAirLocks (s : in out SubmarineAirLocks) is
-      f : AirLock_Idx := s'First;
-      l : AirLock_Idx := s'Last;
+   procedure LockAirLocks (this : in out SubmarineAirLocks) is
+      f : AirLock_Idx := this'First;
+      l : AirLock_Idx := this'Last;
    begin
       for idx in f..l loop
-         s(idx).lock := Locked;
+         this(idx).lock := Locked;
       end loop;
    end LockAirLocks;
+   
+   function ConstructAirlocks return SubmarineAirLocks is 
+      result : SubmarineAirLocks;
+   begin 
+      CloseAirLocks(result);
+      LockAirLocks(result);
+      
+      return result;
+   end ConstructAirlocks;
+
 
 end airlock;

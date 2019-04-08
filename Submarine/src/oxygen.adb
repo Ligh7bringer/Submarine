@@ -1,27 +1,39 @@
 with Ada.Text_IO; use Ada.Text_IO;
 
 package body oxygen is
-
-   function OxygenLow ( ot : in out SubmarineOxygenTank ) return Boolean is 
-     (ot.oxygen_level <= 20);
    
-   procedure DecrementOxygen (ot : in out SubmarineOxygenTank ) is
-   begin
-      if not OxygenLow(ot) then
-         ot.oxygen_level := ot.oxygen_level - 1;
-      else
-         Put_Line("WARNING: O2 low!");
+   -- Updates the status of the oxygen tank based on the current O2 level.
+   procedure UpdateO2Status (this : in out SubmarineOxygenTank) is 
+   begin 
+      if this.oxygen_level <= O2Level(0.75) * O2Level'Last then
+         this.oxygen_status := High;
+      elsif this.oxygen_level <= O2Level(0.5) * O2Level'Last then
+         this.oxygen_status := Medium;
+      elsif this.oxygen_level <= O2Level(0.25) * O2Level'Last then
+         this.oxygen_status := Low;
+         Ada.Text_IO.Put_Line("WARNING: Oxygen level below 25%!");
       end if;
-   end DecrementOxygen;
+   end UpdateO2Status;
    
-   procedure RegainOxygen (ot : in out SubmarineOxygenTank) is
+   -- Updates the level of the oxygen tank based on the variable "lvl".
+   procedure UpdateO2Level (this : in out SubmarineOxygenTank; lvl : in O2Level) is 
+   begin 
+      this.oxygen_level := this.oxygen_level + lvl;
+      UpdateO2Status(this);
+   end UpdateO2Level;  
+   
+   -- Returns the current status of the oxygen tank.
+   function GetOxygenStatus (this : in out SubmarineOxygenTank) return O2Status is
    begin
-      if OxygenLow(ot) then
-         ot.oxygen_level := O2Level'Last;
-      end if;
-   end RegainOxygen;
-
-  
+      return this.oxygen_status;
+   end GetOxygenStatus;      
+   
+   function ConstructO2Tank return SubmarineOxygenTank is 
+      result : SubmarineOxygenTank;
+   begin      
+      UpdateO2Level(result, 99);
       
+      return result;
+   end ConstructO2Tank;
    
 end oxygen;
