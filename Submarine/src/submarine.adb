@@ -42,32 +42,9 @@ package body submarine with SPARK_Mode is
       else        
          if DoorsClosedAndLocked (This.airlocks) then
             -- Dive
-            This.Move(10);
+            This.Move(500);
          end if;
       end if;
    end Update;
-   
-   procedure PrintStatus (This : in Submarine) is     
-      o2 : SubmarineOxygenTank := This.oxygen_tank;
-      subreactor : SubmarineReactor := This.reactor;
-      weapon : SubmarineWeapon := This.weapon;
-      curr_depth : Depth := This.current_depth;
-      doors : SubmarineAirlock := This.airlocks;
-   
-   begin
-      Ada.Text_IO.Put(ASCII.ESC & "[2J");
-      Put_Line("Position: " & This.pos(0)'Image & This.pos(1)'Image);
-      Put_Line("Depth: " & curr_depth'Image & "m");
-   
-      Put_Line("Doors: ");
-      Put_Line("    - 1: " & doors(0).status'Image & ", " & doors(0).lock'Image);
-      Put_Line("    - 2: " & doors(1).status'Image & ", " & doors(1).lock'Image);
-   
-      Put_Line("O2: " & o2.oxygen_level'Image & "%, " & o2.status'Image);
-      Put_Line("Reactor: " & subreactor.temp'Image & "C, " & subreactor.status'Image);
-      Put_Line("Weapon: " & weapon.torpedos'Image & " torpedos");
-   
-      Put_Line("...........................");
-   end PrintStatus;
      
 end submarine;

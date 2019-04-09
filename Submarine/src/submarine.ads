@@ -30,18 +30,16 @@ package submarine with SPARK_Mode is
      
    procedure Move (This : in out Submarine; desired_depth : in Depth) with
      Pre'Class => DoorsInvariant(This.airlocks) and desired_depth <= Depth'Last and desired_depth >= Depth'First,
-     Post => This.current_depth /= This.current_depth'Old;
+     Post => This.current_depth >= 0 and This.current_depth <= 500;
    
    procedure EmergencySurface (This : in out Submarine) with 
      Pre'Class => DoorsInvariant(This.airlocks) and then (This.oxygen_tank.status = Critical or This.reactor.status = Overheated),
      Post => This.current_depth = 0;
    
    procedure Update (This : in out Submarine) with 
-     Post => This.oxygen_tank.oxygen_level < This.oxygen_tank.oxygen_level'Old and
-     This.reactor.temp > This.reactor.temp'Old;
-   
-   procedure PrintStatus (This : in Submarine);
-   
+     Post => This.oxygen_tank.oxygen_level >= 0 and This.oxygen_tank.oxygen_level <=100 and
+     This.reactor.temp >= Temperature'First and This.reactor.temp <= Temperature'Last;
+      
    function ValidateDepth (desired_depth : in Depth) return Boolean with
      Pre => desired_depth >= 0 and desired_depth <= 500,
      Contract_Cases => (desired_depth < 0 => ValidateDepth'Result = False,
