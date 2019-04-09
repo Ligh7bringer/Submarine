@@ -1,31 +1,51 @@
-package body airlock is
+package body airlock with SPARK_Mode is
 
-   procedure CloseAirLocks (this : in out SubmarineAirLocks) is
-      f : AirLock_Idx := this'First;
-      l : AirLock_Idx := this'Last;
-   begin
-      for idx in f..l loop
-         this(idx).door := Closed;
-      end loop;
-   end CloseAirLocks;
-   
-   procedure LockAirLocks (this : in out SubmarineAirLocks) is
-      f : AirLock_Idx := this'First;
-      l : AirLock_Idx := this'Last;
-   begin
-      for idx in f..l loop
-         this(idx).lock := Locked;
-      end loop;
-   end LockAirLocks;
-   
-   function ConstructAirlocks return SubmarineAirLocks is 
-      result : SubmarineAirLocks;
-   begin 
-      CloseAirLocks(result);
-      LockAirLocks(result);
+   procedure CloseDoors (This : in out SubmarineAirlock) is
+      f : AirLock_Idx := This'First;
+      l : AirLock_Idx := This'Last;
       
+   begin      
+      for idx in f..l loop
+         if This(idx).status = Open then
+            This(idx).status := Closed;
+         end if;
+      end loop;      
+   end CloseDoors;
+   
+   procedure LockDoors (This : in out SubmarineAirlock) is
+      f : AirLock_Idx := This'First;
+      l : AirLock_Idx := This'Last;
+      
+   begin      
+      for idx in f..l loop
+         if This(idx).status = Closed and This(idx).lock = Unlocked then
+            This(idx).lock := Locked;
+         end if;
+      end loop;      
+   end LockDoors;
+   
+   function ConstructAirlock return SubmarineAirlock is 
+      result : SubmarineAirlock := (0 => (Closed, Locked), 1 => (Closed, Locked));      
+   begin 
+          
       return result;
-   end ConstructAirlocks;
+   end ConstructAirlock;
+
+   function DoorsClosedAndLocked (airlock : in SubmarineAirlock) return Boolean is 
+   begin 
+      return (for all I in airlock'Range => airlock(I).lock = Locked and airlock(I).lock = Locked);
+   end DoorsClosedAndLocked;
+   
+   procedure OpenDoors (This : in out SubmarineAirlock) is 
+      f : AirLock_Idx := This'First;
+      l : AirLock_Idx := This'Last;
+      
+   begin      
+      for idx in f..l loop
+         This(idx).status := Open;
+         This(idx).lock := Unlocked;
+      end loop;      
+   end OpenDoors;
 
 
 end airlock;

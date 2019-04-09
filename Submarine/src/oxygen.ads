@@ -1,20 +1,30 @@
-package oxygen is
-   
+package oxygen with SPARK_Mode is
+    
    type O2Level is range 0..100;
-   type O2Status is (Low, Medium, High);
-   O2THRESHOLD : constant O2Level := 10;
-
+   type O2Status is (Critical, Sufficient);
+   O2Threshold : constant O2Level := 15;
+   O2Decrement : constant O2Level := 10;
+   
    type SubmarineOxygenTank is tagged record
       oxygen_level : O2Level;
-      oxygen_status : O2Status;
+      status : O2Status;
    end record;
 
-   procedure UpdateO2Level (this : in out SubmarineOxygenTank; lvl : in O2Level);
+   procedure UpdateO2Level (This : in out SubmarineOxygenTank; lvl : in O2Level) with
+     Pre'Class => lvl >= O2Level'First and lvl <= O2Level'Last,
+     Post => This.oxygen_level >= O2Level'First and This.oxygen_level <= O2Level'Last,
+     Contract_Cases => (lvl > O2Threshold and lvl <= O2Level'Last => This.status = Sufficient,
+                        lvl >= O2Level'First and lvl <= O2Threshold => This.status = Critical);
    
-   procedure UpdateO2Status (this : in out SubmarineOxygenTank);
-   
-   function GetOxygenStatus (this : in out SubmarineOxygenTank) return O2Status;
+   procedure Update (This : in out SubmarineOxygenTank) with
+     Pre'Class => This.oxygen_level > O2Decrement,
+     Post => This.oxygen_level >= O2Level'First;
+      
+   procedure UpdateO2Status (This : in out SubmarineOxygenTank) with
+     Pre'Class => This.oxygen_level >= O2Level'First and This.oxygen_level <= O2Level'Last,
+     Contract_Cases => (This.oxygen_level > O2Threshold and This.oxygen_level <= O2Level'Last=> This.status = Sufficient,
+                        This.oxygen_level >= O2Level'First and This.oxygen_level <= O2Threshold => This.status = Critical);
    
    function ConstructO2Tank return SubmarineOxygenTank;
-   
+      
 end oxygen;

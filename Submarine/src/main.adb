@@ -1,6 +1,9 @@
 with Ada.Text_IO; use Ada.Text_IO;
 with submarine; use submarine;
 with airlock; use airlock;
+with oxygen; use oxygen;
+with reactor; use reactor;
+with torpedos; use torpedos;
 
 procedure Main is
    YellowSubmarine : submarine.Submarine;
@@ -8,7 +11,7 @@ procedure Main is
 begin
    while True loop
       YellowSubmarine.PrintStatus;
-      YellowSubmarine.Move(400);
+      YellowSubmarine.Update;
       delay 3.0;
    end loop;
 end Main;

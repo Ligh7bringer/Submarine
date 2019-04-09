@@ -1,32 +1,35 @@
-package body reactor is
+with Ada.Text_IO; use Ada.Text_IO;
 
-   function ConstructReactor return SubmarineReactor is 
-      result : SubmarineReactor;
+package body reactor with SPARK_Mode is
+  
+   procedure UpdateReactorStatus (This : in out SubmarineReactor) is 
    begin 
-      result.temp := 20;
+      if This.temp <= Temperature'Last and This.temp > OverheatThreshold then
+         This.status := Overheated;
+      end if;
       
+      if This.temp <= OverheatThreshold and This.temp >= Temperature'First then
+         This.status := Running;
+      end if;
+      
+   end UpdateReactorStatus;
+
+   procedure UpdateTemperature (This : in out SubmarineReactor; tmp : in Temperature) is
+   begin
+      This.temp := tmp;
+      This.UpdateReactorStatus;
+   end UpdateTemperature;
+   
+   function ConstructReactor return SubmarineReactor is 
+      result : SubmarineReactor := (status => (Running), temp => (5));
+   begin       
       return result;
    end ConstructReactor;
    
-   procedure UpdateReactorStatus (this : in out SubmarineReactor) is 
-   begin 
-      if this.temp <= Temperature'Last then
-         this.status := Overheated;
-      elsif this.temp <= Temperature(0.75) * Temperature'Last then
-         this.status := Hot;
-      elsif this.temp <= Temperature(0.50) * Temperature'Last then
-         this.status := Normal;
-      elsif this.temp <= Temperature(0.25) * Temperature'Last then
-         this.status := Cold;
-      end if;
-   end UpdateReactorStatus;
-
-   
-   procedure UpdateTemperature (this : in out SubmarineReactor; tmp : in out Temperature) is
-   begin
-      this.temp := this.temp + tmp;
-      UpdateReactorStatus(this);
-   end UpdateTemperature;
-
+   procedure Update (This : in out SubmarineReactor) is
+   begin      
+      This.temp := This.temp + TempIncrement;
+      This.UpdateReactorStatus;
+   end;
 
 end reactor;

@@ -1,37 +1,51 @@
 with airlock; use airlock;
 with oxygen; use oxygen;
 with reactor; use reactor;
+with torpedos; use torpedos;
 
 package submarine with SPARK_Mode is
-   
+      
    -- Depth in meters.
    -- 0 is surface level
-   -- Pos'Last is maximum depth
+   -- 500 is maximum depth
    type Depth is range 0..500;
    type xy is array (0..1) of Integer;
-            
+   
    -- The submarine
    type Submarine is tagged record 
       pos : xy := (0 => (0), 1 => (0));
-      current_depth : Depth := 200;
-      airlocks : SubmarineAirLocks := ConstructAirlocks;  
+      current_depth : Depth := 470;
+      airlocks : SubmarineAirlock := ConstructAirlock;  
       oxygen_tank : SubmarineOxygenTank := ConstructO2Tank;
       reactor : SubmarineReactor := ConstructReactor;
+      weapon : SubmarineWeapon := ConstructWeapon;
    end record;
+            
+   -- Invariants --
+   function DepthInvariant (curr : in Depth) return Boolean is 
+     (curr <= Depth'Last and curr >= Depth'First);
    
-   -- Invariant which ensures at least 1 door is 
-   -- set to 'Closed' before performing any action
-   function DoorsClosedInvariant (s : in SubmarineAirLocks) return Boolean is 
-     (for some I in s'Range => s(I).door = Closed);
-   
-   function DepthInvariant (cd : in Depth) return Boolean is 
-     (cd <= Depth'Last and cd >= Depth'First);
-   
-   function O2EnoughInvariant (o2 : in O2Level) return Boolean is 
-     (o2 > O2THRESHOLD);
+   function DoorsInvariant (This : in SubmarineAirlock) return Boolean is 
+     (DoorsClosedAndLocked(This));
      
-   procedure Move (s : in out Submarine; desired_depth : in Depth);
+   procedure Move (This : in out Submarine; desired_depth : in Depth) with
+     Pre'Class => DoorsInvariant(This.airlocks) and desired_depth <= Depth'Last and desired_depth >= Depth'First,
+     Post => This.current_depth /= This.current_depth'Old;
    
-   procedure PrintStatus (this : in out Submarine);
+   procedure EmergencySurface (This : in out Submarine) with 
+     Pre'Class => DoorsInvariant(This.airlocks) and then (This.oxygen_tank.status = Critical or This.reactor.status = Overheated),
+     Post => This.current_depth = 0;
    
+   procedure Update (This : in out Submarine) with 
+     Post => This.oxygen_tank.oxygen_level < This.oxygen_tank.oxygen_level'Old and
+     This.reactor.temp > This.reactor.temp'Old;
+   
+   procedure PrintStatus (This : in Submarine);
+   
+   function ValidateDepth (desired_depth : in Depth) return Boolean with
+     Pre => desired_depth >= 0 and desired_depth <= 500,
+     Contract_Cases => (desired_depth < 0 => ValidateDepth'Result = False,
+                        desired_depth >= 0 and desired_depth <= 500 => ValidateDepth'Result = True,
+                        desired_depth > 500 => ValidateDepth'Result = False);
+      
 end submarine;
