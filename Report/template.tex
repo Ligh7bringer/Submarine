@@ -2,7 +2,8 @@
 
 \usepackage{graphicx} 
 %\usepackage[htt]{hyphenat}
-\usepackage[bottom]{footmisc}
+\usepackage{amsmath}
+\usepackage{booktabs}
 
 \begin{document}
 
@@ -28,7 +29,7 @@ The aim of this report is to describe the implementation and formal proof of a n
 	\item The weapon subsystem.
 \end{itemize}
 
-The programming language \texttt{Ada} was used for the development of the system, while \texttt{SPARK} was used for the formal proof of the functionality. Extensions were added to the initial specification: Object Oriented Programming was used for the development and a simulation of the functionality of the submarine was added in the form of a command line interface.
+The programming language Ada was used for the development of the system, while SPARK was used for the formal proof of the functionality. Extensions were added to the initial specification: Object Oriented Programming was used for the development and a simulation of the functionality of the submarine was added in the form of a command line interface.
 
 \section{Controller Structure}
 The system was divided into packages based on each subsystem. This allowed the separation of code based on its purpose. The following packages were implemented: 
@@ -57,14 +58,14 @@ The airlock system is crucial to the safety of the submarine. It is implemented 
 
 An airlock is defined as an array of \texttt{Door} records. A door has 2 attributes: \texttt{status} and \texttt{lock}. The former refers to whether the door is \textit{Open} or \textit{Closed}. The latter indicates whether it is \textit{Locked} or \textit{Unlocked}. Both attributes are implemented as a \texttt{type} with 2 possible values. Since the requirement stated that a number of doors have to be closed at all times, procedures to close and open the doors were added. The preconditions for the procedure to close the doors checks whether there exists at least one door that is \textit{Open}, while the postcondition ensures that all doors are \textit{Closed}. 
 
-The \texttt{LockDoors} procedure has similar conditions, however they check the lock of the doors instead of the status. 
+The \texttt{LockDoors} procedure has similar pre- and postconditions, however they check the locks of the doors instead of the status. 
 
-Lastly, functions which return the status of the doors were implemented so that they can be used in the preconditions in other subsystems since the submarine cannot operate unless the airlocks are closed and locked.
+Lastly, invariant functions which return the status of the doors were implemented so that they can be used in the preconditions in other subsystems since the submarine cannot operate unless the airlock doors are closed and locked.
 
 A function which creates, initialises and returns an airlock record was also added to act as a constructor for the package.
 
 \subsection{Oxygen Control}
-The oxygen control system is also implemented as a record called \texttt{SubmarineOxygenTank}. It has 2 attributes which indicate the current amount of available oxygen and the status of the system. 
+The oxygen control system (\texttt{OxygenTank}) is also implemented as a record. It has 2 attributes which indicate the current amount of available oxygen and the status of the system. 
 
 The amount of oxygen is stored in a variable of type \texttt{O2Level} which ensures its value is between 0 and 100 (indicating percentage). 
 
@@ -72,7 +73,7 @@ The status is set based on the percentage of available oxygen and its possible v
 
 A procedure (\texttt{UpdateO2Level}) to update the current level of oxygen which takes a \texttt{OxygenTank} record as an \texttt{in out} parameter and a value for the new level as an \texttt{in} parameter was implemented. Its precondition ensures that the new value for the amount of oxygen passed is within the valid range. Its postcondition is implemented as a Contract Case and it checks whether the status of the system is set to the correct value based on the amount of available oxygen. That is, when the oxygen level is higher than a threshold (stored in a constant variable), the status should be \textit{Sufficient}. On the other hand, when its lower, it should be set to Critical.
 
-Another procedure (\texttt{UpdateO2Status}) was implemented to Update the status of the system. It is used within \texttt{UpdateO2Level}. This procedure was made private since it is only used within the package and it does not need to be accessed outside of it. Its precondition checks whether the value for oxygen is within the allowed range. In addition, the postcondition makes sure that the status is set correctly using a similar Contract Case.
+Another procedure (\texttt{UpdateO2Status}) was implemented to Update the status of the system. It is used within \texttt{UpdateO2Level}. This procedure was made \texttt{private} since it is only used within the package and it does not need to be accessed outside of it. Its precondition checks whether the value for oxygen is within the allowed range. In addition, the postcondition makes sure that the status is set correctly using a similar Contract Case.
 
 Lastly, a function to generate an instance of an oxygen control system was created to act as a constructor for the class.
 
@@ -82,51 +83,79 @@ The reactor is represented as a \texttt{record} with 2 attributes: \texttt{tempe
 
 The temperature is a variable of a custom type which specifies a range for valid values (between 0 and 100). Furthermore, the status is also a custom type. The values it can accept are either \textit{Running} or \textit{Overheated}. In addition, The threshold, which defines when the reactor has overheated, is specified as a \texttt{constant} variable of the same type as the temperature variable.
 
-This package also includes several procedures. Firstly, a \texttt{private} procedure to update the status of the reactor was added. It takes a reactor record as a parameter. It then checks its current temperature and updates the status accordingly. The precondition for this function checks whether the reactor's temperature is within the valid range. Its postcondition is a Contract Case which checks that for values below and above the threshold the status is set to Running and Overheated respectively. 
+This package also includes several procedures. Firstly, a \texttt{private} procedure to update the status of the reactor was added. It takes a reactor record as an \texttt{in out} parameter. It then checks its current temperature and updates the status accordingly. The precondition for this function checks whether the reactor's temperature is within the valid range. Its postcondition is a Contract Case which checks that for values below and above the threshold the status is set to Running and Overheated respectively. 
 
-Another procedure added was \texttt{UpdateTemperature}. It takes a Reactor record and a temperature value as parameters and changes the current temperature of the reactor to the passed value. Lastly, it calls the \texttt{UpdateStatus} functions so that the status reflects the change in temperature. The precondition for this operation is that the passed value is within the valid range for temperatures. The postcondition, which is a Contract Case, ensures that the status is set correctly when the value is below and above the temperature threshold.
+Another procedure added was \texttt{UpdateTemperature}. It takes a Reactor record an an \texttt{in out} parameter and a temperature value as an \texttt{in} parameter and changes the current temperature of the reactor to the passed value. Lastly, it calls the \texttt{UpdateStatus} functions so that the status reflects the change in temperature. The precondition for this operation is that the passed value is within the valid range for temperatures. The postcondition, which is a Contract Case, ensures that the status is set correctly when the value is below and above the temperature threshold.
 
 The last function in this package constructs a reactor record and returns it similarly to a constructor in other programming languages.
 
 \subsection{Weapon System}
 The weapon system package provides a \texttt{Weapon} record. It contains a \texttt{torpedoes} attribute. It is a variable of a custom type, \texttt{TorpedoRange}, which specifies its valid range, i.e. the number of torpedoes that can exist on the submarine. Additionally, the weapon record contains a \texttt{loaded} boolean which indicates whether the weapon is ready to fire. 
 
-Three procedures were implemented in this package. Firstly, \texttt{Store} takes a \texttt{Weapon} record as a parameter. It then checks whether the current number of torpedoes is below the maximum allowed value. If this is true, the number of torpedoes is incremented. The precondition for this operation is that the number of torpedoes is less than the maximum allowed number. The postcondition checks whether the number has been incremented by exactly 1.
+Three procedures were implemented in this package. Firstly, \texttt{Store} takes a \texttt{Weapon} record as an \texttt{in out} parameter. It then checks whether the current number of torpedoes is below the maximum allowed value. If this is true, the number of torpedoes is incremented. The precondition for this operation is that the number of torpedoes is less than the maximum allowed number. The postcondition checks whether the number has been incremented by exactly 1.
 
-Another procedure, \texttt{Load}, also takes a Weapon record as a parameter. It then sets its \texttt{loaded} variable to True if it is not loaded already. The precondition for this function ensures that the weapon is not already loaded and that its torpedo count is greater than 0. Its postcondition checks whether \texttt{loaded} has been successfully set to \texttt{True} and that the number of torpedoes is the same as before it was loaded.
+Another procedure, \texttt{Load}, also takes a Weapon record as an \texttt{in out} parameter. It then sets its \texttt{loaded} variable to True if it is not loaded already. The precondition for this function ensures that the weapon is not already loaded and that its torpedo count is greater than 0. Its postcondition checks whether \texttt{loaded} has been successfully set to \texttt{True} and that the number of torpedoes is the same as before it was loaded.
 
-The last procedure in this package is \texttt{Fire}. It takes a \texttt{Weapon} as a parameter. If the weapon is loaded and it has more than 0 torpedoes available, it decreases its torpedo count by one and sets it's loaded variable to \texttt{False}. The precondition for this procedure checks whether the weapon is loaded and it has available torpedoes. The postcondition checks if the loaded variable has successfully been set to \texttt{False} and that the number of torpedoes has decreased by exactly 1.
+The last procedure in this package is \texttt{Fire}. It takes a \texttt{Weapon} as an \texttt{in out} parameter. If the weapon is loaded and it has more than 0 torpedoes available, it decreases its torpedo count by one and sets it's loaded variable to \texttt{False}. The precondition for this procedure checks whether the weapon is loaded and it has available torpedoes. The postcondition checks if the loaded variable has successfully been set to \texttt{False} and that the number of torpedoes has decreased by exactly 1.
+
+A function to create, initialise and return a \texttt{Weapon} record was also added to be used as a constructor.
 
 \subsection{Submarine}
 The submarine combines all implemented packages. It implements a \texttt{Submarine} record which has the following attributes:
 \begin{itemize}
 	\item \texttt{position} - the $x$ and $z$ coordinates of the submarine which indicate its current position along the respective axes. It is a variable of a custom type which is an array of 2 Integers.
 	\item \texttt{current\_depth} - the current depth position of the submarine. It can be considered its $y$ coordinate. Its type is a range between 0 and 500.
-	\item \texttt{airlock} - a variable of type \texttt{SubmarineAirlock}.
-	\item \texttt{oxygen\_tank} - a variable of type \texttt{SubmarineOxygenTank}.
-	\item \texttt{reactor} - a variable of type \texttt{SubmarineReactor}.
-	\item \texttt{weapon} - a variable of type \texttt{SubmarineWeapon}.
+	\item \texttt{airlock} - a variable of type \texttt{Airlock}.
+	\item \texttt{oxygen\_tank} - a variable of type \texttt{OxygenTank}.
+	\item \texttt{reactor} - a variable of type \texttt{Reactor}.
+	\item \texttt{weapon} - a variable of type \texttt{Weapon}.
 \end{itemize}
 
 Invariants were added to this package to simplify the usage of often checked conditions. Firstly, a function which returns a boolean based on whether both airlock doors are \textit{Closed} and \textit{Locked} was created. The second invariant ensures  the current depth of the submarine is within the valid range.
 
-The procedures of this package are \texttt{Move} and the \texttt{EmergencySurface}. 
+The procedures of this package are \texttt{Move} and \texttt{EmergencySurface}. 
+\texttt{Move} takes a Submarine record as an \texttt{in out} parameter and a new depth value as an \texttt{in} parameter. After validating the new depth is within the allowed range, it updates the current position of the submarine. The precondition for this procedure checks whether the doors of the airlock are closed and locked using the invariant described above. It also checks whether the new depth is within the valid range and ensures there are sufficient levels of oxygen and that the reactor has not overheated. The postcondition ensures that the new position is within the valid range.
 
-\texttt{Move} takes a Submarine record as an \texttt{in out} parameter and a new depth value as an \texttt{in} parameter. After validating the new depth is within the allowed range, it updates the current position of the submarine. The precondition for this procedure checks whether the doors of the airlock are closed and locked using the invariant described above, checks whether the new depth is within the valid range and checks whether there are sufficient levels of oxygen and that the reactor has not overheated. The postcondition ensures that the new position is within the valid range.
-
-\texttt{EmergencySurface} takes a \texttt{Submarine} record as an \texttt{in out} parameter. It then changes is depth to 0 so that the submarine resurfaces. The precondition for this procedure checks whether the status of the oxygen system is \textit{Critical} or the status of the reactor is \textit{Overheated}. Either one of these conditions must be true as well as the invariant which checks whether the airlock doors are closed and locked. The postcondition ensures that the new depth is exactly 0. 
+\texttt{EmergencySurface} takes a \texttt{Submarine} record as an \texttt{in out} parameter. It then changes its depth to 0 so that the submarine resurfaces. The precondition for this procedure checks whether the status of the oxygen system is \textit{Critical} or the status of the reactor is \textit{Overheated}. Either one of these conditions must be true as well as the invariant which checks whether the airlock doors are closed and locked. The postcondition ensures that the new depth is exactly 0. 
 
 \subsection{Simulation}
 As an extra feature, a command line interface was added to show the current status of the submarine. This was achieved by printing the status of each subsystem. Additionally, \texttt{Update} procedures were added to the Submarine, SubmarineOxygenTank and SubmarineReactor records. 
 
 The Update methods of the reactor and the oxygen system simply modify the values of the systems by a fixed amount if the submarine is not at surface level. For the oxygen system, the level of oxygen is reduced while for the reactor the temperature is increased. These methods are called in the submarine's Update method. The status of both systems is then checked. If either one is critical, the EmergencySurface method is called so that the submarine can regain oxygen or decrease the temperature of the reactor. 
 
-Lastly, a main package was added which creates a global submarine variable. An infinite loop is then started, which updates the submarine and prints it status at each iteration.
+Lastly, a main package was added which creates a global submarine variable. An infinite loop is then started, which updates the submarine and prints its status at each iteration.
 
 \section{Proof of Consistency}
-\section{Conclusion}
-To conclude, the specified requirements were implemented. Additionally, extensions were added in the form of a simulation of the operation of the submarine. A software design addition was added in the form of an Object-Oriented code structure. The functionality of the resulting system was proved with SPARK and it achieved \textit{Gold} level with some exceptions. Firstly, warning are shown due to the use of Ada's text printing functions. Secondly, two preconditions are considered weak. Overall, it can be said that the requirements were met and a satisfactory level of proof was achieved.
+An important operation of the submarine is the movement procedure. It has to check whether the submarine is not diving below a certain depth. To do that, it has to ensure that the new depth position is correct. This is achieved by proving that the difference between the new position and the current position is exactly the desired amount to move. If $current$ is the current position of the submarine, and $current + desired$ is the new position, then:
+\[
+new - current = (current + desired) - current = desired
+\]
+Therefore, the amount of units the position was changed by is $desired$ and the movement was correct.
 
-Future work could include user input to control the submarine in the simulation, 
+Another important part of the movement of the submarine is the EmergencySurface procedure. If the doors of the submarine are closed and locked and the oxygen system status is critical or the reactor system's status is overheated, then the position should be 0 and the statuses should change to sufficient and running respectively. A proof is provided below. $P_1$ is the status of the oxygen system, $Q_1$ is the status of the reactor, $pos_1$ is the current position, $P_2$ is the status of the oxygen system after resurfacing, $Q_2$ is the status of the reactor after resurfacing, $pos_2$ is the new position. 
+
+\begin{gather*}
+	Ax \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Ax \\ \midrule
+	P_1 , pos_1 \implies P_2 , Q_2 , pos_2 \ \ \ \ \ Q_1 , pos_1 \implies P_2 , Q_2 , pos_2 \\ \midrule
+	P_1 , pos_1 \implies P_2 , Q_2 , pos_2 \ \ \ \ \ Q_1 , pos_1 \implies P_2 \land Q_2 \land pos_2 \\ \midrule
+	P_1 , pos_1 \implies P_2 , Q_2 , pos_2 \ \ \ \ \ Q_1 \land pos_1 \implies P_2 \land Q_2 \land pos_2 \\ \midrule
+	P_1 , pos_1 \implies P_2 \land Q_2 \land pos_2 \ \ \ \ \ Q_1 \land pos_1 \implies P_2 \land Q_2 \land pos_2 \\ \midrule
+	P_1 \land pos_1 \implies P_2 \land Q_2 \land pos_2 \ \ \ \ \ Q_1 \land pos_1 \implies P_2 \land Q_2 \land pos_2 \\ \midrule
+	(P_1 \lor Q_1) \land pos_1 	\implies  P_2 \land Q_2 \land pos_2 \\ \midrule
+	\implies (P_1 \lor Q_1) \land pos_1 \supset P_2 \land Q_2 \land pos_2 
+\end{gather*}
+
+Another verified part of the program is the Weapon system. It's verification process ensures that if a torpedo is stored, the number of torpedos has increased by 1.
+
+Let $t$ be the current number of torpedoes and $t+1$ be the number after adding 1 torpedo. It can then be calculated that the difference between the new number of torpedos and their number before adding a new one is:
+\begin{equation*}
+	t_{new} - t_{old} = (t+1) - t = 1
+\end{equation*}
+Therefore, the number of torpedoes has increased by exactly 1.
+
+\section{Conclusion}
+To conclude, the specified requirements were implemented. Additionally, extensions were added in the form of a simulation of the operation of the submarine. Furthemore, the software was designed with Object-Oriented principles. The functionality of the resulting system was proved with SPARK and it achieved Gold level with some exceptions. Firstly, warning are shown due to the use of Ada's text printing functions. Secondly, two procedures' preconditions are considered weak (the update procedures of the oxygen and reactor subsystems) due to their usage in the submarine's update procedure. Overall, it can be said that the requirements were met and a satisfactory level of proof was achieved.
+
+Future work could include user input to control the submarine in the simulation or a graphical user interface could be added. In addition, the torpedoes can be implemented as a record with suitable attributes. Lastly, the submarine airlocks can be automatically unlocked when at surface level and locked when diving.
 
 \end{document}
